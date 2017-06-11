@@ -87,6 +87,7 @@ int main() {
           // j[1] is the data JSON object
           vector<double> ptsx = j[1]["ptsx"];
           vector<double> ptsy = j[1]["ptsy"];
+          assert(ptsx.size() == ptsy.size());
           double px = j[1]["x"];
           double py = j[1]["y"];
           double psi = j[1]["psi"];
@@ -123,6 +124,17 @@ int main() {
 
           //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
           // the points in the simulator are connected by a Yellow line
+
+          std::cout << "Number of waypoints: " << ptsx.size() << std::endl;
+          for (int i = 0; i < ptsx.size(); ++i) {
+            double x = ptsx[i] - px;
+            double y = ptsy[i] - py;
+            double transformed_x = cos(psi) * x + sin(psi) * y;
+            double transformed_y = -sin(psi) * x + cos(psi) * y;
+            next_x_vals.push_back(transformed_x);
+            next_y_vals.push_back(transformed_y);
+            // cout << "Waypoint " << i << " : " << ptsx[i] << "," << ptsy[i] << " -> " << transformed_x << "," << transformed_y << std::endl;
+          }
 
           msgJson["next_x"] = next_x_vals;
           msgJson["next_y"] = next_y_vals;
