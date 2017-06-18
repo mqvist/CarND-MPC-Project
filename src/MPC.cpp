@@ -8,9 +8,9 @@ using namespace std;
 
 // Number of time steps. Lower values lead to unstable car behavior and
 // larger values just make the calculations slower.
-size_t N = 25;
+size_t N = 10;
 // Time step length. This seems to work with 100ms latency.
-double dt = 0.05;
+double dt = 0.1;
 
 // This value assumes the model presented in the classroom is used.
 //
@@ -23,7 +23,7 @@ double dt = 0.05;
 //
 // This is the length from front to CoG that has a similar radius.
 const double Lf = 2.67;
-const double ref_v = 40;
+const double ref_v = 20;
 
 size_t x_start = 0;
 size_t y_start = x_start + N;
@@ -109,10 +109,10 @@ class FG_eval {
 
       fg[1 + x_start + t] = x1 - (x0 + v0 * CppAD::cos(psi0) * dt);
       fg[1 + y_start + t] = y1 - (y0 + v0 * CppAD::sin(psi0) * dt);
-      fg[1 + psi_start + t] = psi1 - (psi0 + v0 / Lf * delta0 * dt);
+      fg[1 + psi_start + t] = psi1 - (psi0 - v0 / Lf * delta0 * dt);
       fg[1 + v_start + t] = v1 - (v0 + a0 * dt);
       fg[1 + cte_start + t] = cte1 - ((f0 - y0) + v0 * CppAD::sin(epsi0) * dt);
-      fg[1 + epsi_start + t] = epsi1 - ((psi0 - psides0) + v0 / Lf * delta0 * dt);
+      fg[1 + epsi_start + t] = epsi1 - ((psi0 - psides0) - v0 / Lf * delta0 * dt);
     }
   }
 };
@@ -236,8 +236,15 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   auto cost = solution.obj_value;
   std::cout << "Cost " << cost << std::endl;
 
-  // Here is how this controller can deal with the 100ms latency: the actutator
-  // values are taken from two time steps in the future. Because time step is
-  // 50ms this effectively results to predicting 100ms in to the future.
-  return {solution.x[delta_start + 2], solution.x[a_start + 2]};
+  vector<double> result;
+  // Actuator values
+  result.push_back(solution.x[delta_start]);
+  result.push_back(solution.x[a_start]);
+  // Estimated car positions
+  for (int i = 0; i < N - 1; i++) {
+    result.push_back(solution.x[x_start + i + 1]);
+    result.push_back(solution.x[y_start + i + 1]);
+  }
+  //return {solution.x[delta_start], solution.x[a_start]};
+  return result;
 }

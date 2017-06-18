@@ -11,8 +11,12 @@ limits for the throttle that had to be modified slightly.
    (elapsed duration between timesteps) values. Additionally the student details
    the previous values tried.
 
-The N and dt have the same values as in the lessons. These values seemed to work
-well and I did not need to tune them.
+Currently I have N at 10 and dt at 0.1. Originally I used the same values as in
+the lessons (N = 25, dt = 0.05), but after seeing the MPC project Q&A video I
+decided to try the values from the video. Those values did not work with my
+original latency handling, but after I solved the latency issues using the state
+prediction, also the values of N and dt started to work. The benefit of lower
+value of N (10 instead of 25) is that the algorithm runs faster.
 
 
 3. If the student preprocesses waypoints, the vehicle state, and/or actuators
@@ -25,6 +29,16 @@ can be set to zero in each time step.
 
 4. Student provides details on how they deal with latency.
 
-I dealt with the latency by using the actuator values that are two time steps in
-the future. Because the time step is 50ms this results to effectively predicting
-100ms ahead, which is exactly the amount of latency in this case.
+My original solution to handling the latency was using the actuator values from
+two time steps in the future. Because the time step is 100ms and my original
+time step was 50ms, this resulted to effectively predicting 100ms ahead, which
+is exactly the amount of latency in this case.
+
+However, after comments from the 2nd review, I decided to check if the latency
+could be handled by state prediction. This required a lot of tweaking of the
+code as there were some issues, such as the MPC tuning, that did not seem to get
+along with the state prediciton. In the end I got the state prediction working
+to a reasonable degree. I predict x, y, psi and v to 100ms to the future in 10ms
+time steps. I use the 10ms steps to increase prediction accuracy. The car drives
+near to the center line if the speed does not exceed about 45MPH; highed speeds
+tend to result to result to increasing steering oscillations.
